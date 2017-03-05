@@ -13,4 +13,4 @@ Bootstrap(webapp)
 from app import errors
 from app import views
 from app import forms
-from app import imagetransform
+from app import thumbnails

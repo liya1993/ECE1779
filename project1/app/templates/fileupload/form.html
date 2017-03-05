@@ -16,9 +16,9 @@
 {% block content %}
 <form action="/user/FileUpload"  enctype="multipart/form-data" method="post">
   <div class="form-group">
-    <label for="exampleInputEmail1">Email address</label>
-    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email" name="userID">
-    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+    <label>User ID</label>
+    <input type="text" class="form-control" placeholder="Enter username" name="userID">
+    <small id="usernameHelp" class="form-text text-muted">We'll never share your information with anyone else.</small>
   </div>
   <div class="form-group">
     <label for="exampleInputPassword1">Password</label>
@@ -28,9 +28,11 @@
   <div class="form-group">
     <label for="exampleInputFile">File input</label>
     <input type="file" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp" name="uploadedfile">
-    <small id="fileHelp" class="form-text text-muted">This is some placeholder block-level help text for the above input. It's a bit lighter and easily wraps to a new line.</small>
+    <small id="fileHelp" class="form-text text-muted">We only accept image file.</small>
   </div>
 
   <button type="submit" class="btn btn-primary" value="Send">Submit</button>
 </form>
 {% endblock %}
+
+{#TODO change email to user id#}
