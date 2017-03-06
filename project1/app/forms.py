@@ -65,20 +65,6 @@ def teardown_db(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-@webapp.route('/user/trivial', methods=['GET'])
-def trivial():
-    cnx = mysql.connector.connect(user='root',
-                                  password='8313947463',
-                                  host='127.0.0.1',
-                                  database='ECE1779')
-    cursor = cnx.cursor()
-    query = "SELECT * FROM courses"
-    cursor.execute(query)
-    view = render_template("trivial.html", title="Courses Table", cursor=cursor)
-    cnx.close()
-    return view
-
 '''
 
 Routers for Login
@@ -86,11 +72,33 @@ Routers for Login
 '''
 
 @webapp.route('/user/login', methods=['GET', 'POST'])
+# Display an empty HTML form that allows users to login
+# check the database for existing username and password
+# if not right, return to this page again
 def login():
     form = LoginForm()
+    username = request.form.get('username')
+    password = request.form.get('password')
     if form.validate_on_submit():
-        return redirect('/success')
-    return render_template('login/login.html', form=form)
+        cnx = get_db()
+        cursor=cnx.cursor()
+        query = '''SELECT * FROM users WHERE login = %s
+        '''
+        cursor.execute(query,(username,))
+        if cursor.fetchone() is None:
+            flash(u"Username doesn't exist!",'warning')
+            return render_template("/login/login.html",form=form)
+        else:
+            query = '''SELECT * FROM users WHERE login = %s AND password = %s
+            '''
+            cursor.execute(query,(username,password))
+            if cursor.fetchone() is None:
+                flash(u"Password is wrong!",'warning')
+                return  render_template("/login/login.html",form=form)
+            else:
+                flash(u"Login Success!",'success')
+                return render_template("/fileupload/form.html")
+    return render_template("/login/login.html", form=form)
 
 '''
 
@@ -110,16 +118,17 @@ def register():
         query = '''SELECT * FROM users WHERE login = %s'''
         cursor.execute(query, (username,))
         if cursor.fetchone() is not None:
-            flash(u"That username is already taken.",'danger')
-            return render_template('/register/register.html', form=form)
+            flash(u"That username is already taken.",'warning')
+            return render_template("/register/register.html", form=form)
         else:
             query = ''' INSERT INTO users (login, password)
                                VALUES (%s,%s)
             '''
             cursor.execute(query, (username, password))
             cnx.commit()
-            return redirect('/success')
-    return render_template('register/register.html', form=form)
+            flash(u"Register Success!",'success')
+            return render_template("/fileupload/form.html")
+    return render_template("/register/register.html", form=form)
 
 '''
 
@@ -130,7 +139,7 @@ Routers for Uploading Images
 @webapp.route('/user/FileUpload/form',methods=['GET'])
 #Return file upload form
 def upload_form():
-    return render_template("fileupload/form.html")
+    return render_template("/fileupload/form.html")
 
 @webapp.route('/user/FileUpload', methods=['GET','POST'])
 #Show the uploaded image
@@ -142,8 +151,8 @@ def upload_file():
         # check if the post request has the file part
         if 'uploadedfile' not in request.files:
             # return "Missing uploaded file"
-            flash(u'Missing uploaded file', 'info')
-            return render_template("fileupload/form.html")
+            flash(u'Missing uploaded file', 'warning')
+            return render_template("/fileupload/form.html")
 
         file = request.files['uploadedfile']
 
@@ -151,14 +160,14 @@ def upload_file():
         # submit a empty part without filename
         if file.filename == '':
             # return 'Missing file name'
-            flash(u'Missing file name', 'warning')
-            return render_template("fileupload/form.html")
+            flash(u"Missing file name", 'warning')
+            return render_template("/fileupload/form.html")
 
         if file:
             filename = photos.save(request.files['uploadedfile'])
             file_url = photos.url(filename)
-            return render_template('base.html') + '<br><img src=' + file_url + '>'
-    return render_template('base.html')
+            return render_template("base.html") + '<br><img src=' + file_url + '>'
+    return render_template("base.html")
 
 '''
 
@@ -169,7 +178,7 @@ Routers for Transforming Images
 @webapp.route('/user/imagetransform/form',methods=['GET'])
 #Return file upload form
 def image_form():
-    return render_template("imagetransform/form.html")
+    return render_template("/imagetransform/form.html")
 
 @webapp.route('/user/imagetransform',methods=['POST'])
 #Upload a new image and tranform it
@@ -184,7 +193,7 @@ def image_transform():
     # if user does not select file, browser also
     # submit a empty part without filename
     if new_file.filename == '':
-        return 'Missing file name'
+        return "Missing file name"
 
     tempdir = tempfile.gettempdir()
 
@@ -201,6 +210,6 @@ def image_transform():
 
     i.save(filename=fname_rotated)
 
-    return render_template("imagetransform/view.html",
+    return render_template("/imagetransform/view.html",
                            f1=fname[4:],
                            f2=fname_rotated[4:])
