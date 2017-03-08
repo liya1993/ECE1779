@@ -14,3 +14,5 @@ from app import errors
 from app import views
 from app import forms
 from app import thumbnails
+from app import  s3
+from app import  ec2

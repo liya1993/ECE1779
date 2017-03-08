@@ -17,8 +17,7 @@ def s3_list():
 
     buckets = s3.buckets.all()
 
-    return render_template("s3_examples/list.html",title="s3 Instances",buckets=buckets)
-
+    return render_template("s3/list.html",title="s3 Instances",buckets=buckets)
 
 @webapp.route('/s3_examples/<id>',methods=['GET'])
 #Display details about a specific bucket.
@@ -33,8 +32,7 @@ def s3_view(id):
     keys =  bucket.objects.all()
 
 
-    return render_template("s3_examples/view.html",title="S3 Bucket Contents",id=id,keys=keys)
-
+    return render_template("s3/view.html",title="S3 Bucket Contents",id=id,keys=keys)
 
 @webapp.route('/s3_examples/upload/<id>',methods=['POST'])
 #Upload a new file to an existing bucket

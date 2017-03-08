@@ -10,6 +10,7 @@ from config import db_config
 
 import tempfile
 import os
+import boto3
 
 from app import webapp
 # from wand.image import Image
@@ -71,7 +72,7 @@ Routers for Login
 
 '''
 
-@webapp.route('/user/login', methods=['GET', 'POST'])
+@webapp.route('/login', methods=['GET', 'POST'])
 # Display an empty HTML form that allows users to login
 # check the database for existing username and password
 # if not right, return to this page again
@@ -105,7 +106,7 @@ def login():
 Routers for Register
 
 '''
-@webapp.route('/user/register', methods=['GET', 'POST'])
+@webapp.route('/register', methods=['GET', 'POST'])
 # Display an empty HTML form that allows users to register a new account
 # If everything in the form are right, save them in the dataabse to create a new account for the new user
 def register():
@@ -136,17 +137,17 @@ Routers for Uploading Images
 
 '''
 
-@webapp.route('/user/FileUpload/form',methods=['GET'])
+@webapp.route('/FileUpload/form',methods=['GET'])
 #Return file upload form
 def upload_form():
     return render_template("/fileupload/form.html")
 
-@webapp.route('/user/FileUpload', methods=['GET','POST'])
+@webapp.route('/FileUpload', methods=['GET','POST'])
 #Show the uploaded image
 def upload_file():
     if request.method == 'POST':
         userid = request.form.get("userID")
-        passowrd = request.form.get("password")
+        password = request.form.get("password")
 
         # check if the post request has the file part
         if 'uploadedfile' not in request.files:
@@ -164,9 +165,30 @@ def upload_file():
             return render_template("/fileupload/form.html")
 
         if file:
-            filename = photos.save(request.files['uploadedfile'])
-            file_url = photos.url(filename)
-            return render_template("base.html") + '<br><img src=' + file_url + '>'
+            # query the database to find whether the account exist and the password is right
+            cnx = get_db()
+            cursor = cnx.cursor()
+            query = '''SELECT * FROM users WHERE login = %s AND password = %s
+            '''
+            cursor.execute(query,(userid,password))
+            row = cursor.fetchone()
+            if row is not None:
+                # save the uploaded file into uploads directory
+                filename = photos.save(request.files['uploadedfile'])
+                file_url = photos.url(filename)
+                query = '''INSERT INTO images (userid, key1)
+                               VALUES (%s,%s)
+                '''
+                cursor.execute(query,(int(row[0]),file.filename))
+                cnx.commit()
+                # save the file into the S3 bucket
+                s3 = boto3.client('s3')
+                s3.upload_fileobj(file, 'ece1779project', file.filename)
+                flash(u"Upload Success!", 'success')
+                return render_template("base.html") + '<br><img src=' + file_url + '>'
+            else:
+                flash(u"Username does not exist or password is wrong!",'warning')
+                return render_template("/fileupload/form.html")
     return render_template("base.html")
 
 '''
@@ -175,12 +197,12 @@ Routers for Transforming Images
 
 '''
 
-@webapp.route('/user/imagetransform/form',methods=['GET'])
+@webapp.route('/imagetransform/form',methods=['GET'])
 #Return file upload form
 def image_form():
     return render_template("/imagetransform/form.html")
 
-@webapp.route('/user/imagetransform',methods=['POST'])
+@webapp.route('/imagetransform',methods=['POST'])
 #Upload a new image and tranform it
 def image_transform():
 

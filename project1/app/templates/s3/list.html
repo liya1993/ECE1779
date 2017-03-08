@@ -11,7 +11,7 @@
             <td>{{ bucket.name }}</td>
             <td>{{ bucket.creation_date }}</td>
             <td>
-                <form action="{{url_for('s3_list',id=bucket.name)}}" method='get'>
+                <form action="{{url_for('s3_view',id=bucket.name)}}" method='get'>
                     <input type='submit' value='Details' />
                 </form>
             </td>
