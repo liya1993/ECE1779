@@ -13,8 +13,7 @@ import os
 import boto3
 
 from app import webapp
-# from wand.image import Image
-import wand
+from wand.image import Image
 
 photos = UploadSet('photos', IMAGES)
 configure_uploads(webapp, photos)
@@ -173,17 +172,39 @@ def upload_file():
             cursor.execute(query,(userid,password))
             row = cursor.fetchone()
             if row is not None:
-                # save the uploaded file into uploads directory
+                s3 = boto3.client('s3')
+                # save the uploaded file into uploads directory and S3 bucket
                 filename = photos.save(request.files['uploadedfile'])
                 file_url = photos.url(filename)
-                query = '''INSERT INTO images (userid, key1)
-                               VALUES (%s,%s)
-                '''
-                cursor.execute(query,(int(row[0]),file.filename))
-                cnx.commit()
-                # save the file into the S3 bucket
-                s3 = boto3.client('s3')
                 s3.upload_fileobj(file, 'ece1779project', file.filename)
+                # rotate the image and save the 3 transformed image files into uploads directory and s3 bucket
+                fname = os.path.join('uploads', file.filename)
+                img = Image(filename=fname)
+
+                i = img.clone()
+                i.rotate(90)
+                fname_rotated1 = os.path.join('uploads','rotated1_'+ file.filename)
+                i.save(filename=fname_rotated1)
+                with open(fname_rotated1, "rb") as image1:
+                    s3.upload_fileobj(image1, 'ece1779project', 'rotated1_'+ file.filename)
+
+                i.rotate(90)
+                fname_rotated2 = os.path.join('uploads', 'rotated2_' + file.filename)
+                i.save(filename=fname_rotated2)
+                with open(fname_rotated2, "rb") as image2:
+                    s3.upload_fileobj(image2, 'ece1779project', 'rotated2_'+ file.filename)
+
+                i.rotate(90)
+                fname_rotated3 = os.path.join('uploads', 'rotated3_' + file.filename)
+                i.save(filename=fname_rotated3)
+                with open(fname_rotated3, "rb") as image3:
+                    s3.upload_fileobj(image3, 'ece1779project', 'rotated3_'+ file.filename)
+
+                query = '''INSERT INTO images (userid, key1, key2, key3, key4)
+                               VALUES (%s,%s,%s,%s,%s)
+                '''
+                cursor.execute(query,(int(row[0]),file.filename,'rotated1_'+ file.filename,'rotated2_' + file.filename,'rotated3_' + file.filename))
+                cnx.commit()
                 flash(u"Upload Success!", 'success')
                 return render_template("base.html") + '<br><img src=' + file_url + '>'
             else:
@@ -223,7 +244,7 @@ def image_transform():
 
 
     new_file.save(fname)
-
+    #print (fname)
     img = Image(filename=fname)
     i = img.clone()
     i.rotate(90)
