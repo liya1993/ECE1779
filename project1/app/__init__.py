@@ -10,9 +10,7 @@ webapp.config['SECRET_KEY'] = 'hard to guess string'
 
 Bootstrap(webapp)
 
-from app import errors
 from app import views
 from app import forms
 from app import thumbnails
-from app import  s3
-from app import  ec2
+from app import s3
