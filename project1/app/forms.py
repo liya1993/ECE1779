@@ -173,10 +173,12 @@ def upload_file():
             row = cursor.fetchone()
             if row is not None:
                 s3 = boto3.client('s3')
+
                 # save the uploaded file into uploads directory and S3 bucket
                 filename = photos.save(request.files['uploadedfile'])
                 file_url = photos.url(filename)
                 s3.upload_fileobj(file, 'ece1779project', file.filename)
+
                 # rotate the image and save the 3 transformed image files into uploads directory and s3 bucket
                 fname = os.path.join('uploads', file.filename)
                 img = Image(filename=fname)
