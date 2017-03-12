@@ -13,7 +13,7 @@ import os
 import boto3
 
 from app import webapp
-from wand.image import Image
+#from wand.image import Image
 
 photos = UploadSet('photos', IMAGES)
 configure_uploads(webapp, photos)

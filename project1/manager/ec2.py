@@ -168,8 +168,8 @@ def project_terminate():
 
     return redirect(url_for('ec2_list'))
 
-@admin.route('/ec2/config',methods=['GET','POST'])
-def project_config():
+# @admin.route('/ec2/config',methods=['GET','POST'])
+# def project_config():
 
 # An option for configuring the auto-scaling policy by setting the following parameters:
 # CPU threshold for growing the worker pool
