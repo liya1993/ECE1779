@@ -61,10 +61,12 @@ def get_db():
     return db
 
 @webapp.teardown_appcontext
+# this will execute every time when the context is closed
 def teardown_db(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
 '''
 
 Routers for Login
